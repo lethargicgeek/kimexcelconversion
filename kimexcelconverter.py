@@ -29,6 +29,7 @@ def PivotSecondParentData(dataList):
             firstContact["Family2Address1"] = secondContact["FamilyAddress1"]
             firstContact["Family2City"] = secondContact["FamilyCity"]
             firstContact["Family2Zip"] = secondContact["FamilyZip"]
+            firstContact["Parent2Relationship"] = secondContact["ParentRelationship"]
     return newStudentList
 
 def TransformAndExport(dest_file_name, dataList):
