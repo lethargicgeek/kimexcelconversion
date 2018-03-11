@@ -1,31 +1,51 @@
 import openpyxl
 import os
+import json
 
 def run():
     print("starting...")
-    #data = UseOpenpyxl("data/HKF Cesar Chavez.xlsx")
+    # data = UseOpenpyxl("data/HKF Cesar Chavez.xlsx")
     data = []
     directoryName = "data"
- #   directory = os.fsencode("data")
 
+    # parsing through the whole directory
     for filename in os.listdir(directoryName):
-        #filename = os.fsdecode(file)
+        # filename = os.fsdecode(file)
         if filename.endswith(".xlsx"):
             # print(os.path.join(directory, filename))
-            fileData = UseOpenpyxl("data/"+filename)
+            fileData = UseOpenpyxl("data/" + filename)
             data.extend(fileData)
             continue
         else:
             continue
 
+    # Sort the list
+    data.sort(sortInputData)
+
     newStudentList = PivotSecondParentData(data)
     TransformAndExport("KimExportedData.xlsx", newStudentList)
     print("done")
+
+
+def sortInputData(a, b):
+    if (a["ParentRelationship"] == b["ParentRelationship"]):
+        return 0
+    if (a["ParentRelationship"] == "Mother"):
+        return -1
+    if (b["ParentRelationship"] == "Mother"):
+        return 1
+    if (a["ParentRelationship"] == "Father"):
+        return -1
+
+    return -1
+
 
 def PivotSecondParentData(dataList):
     studentHash = {}
     # Hash of all students to their parental contacts
     for dataRow in dataList:
+        if dataRow["ChildID"] is None or dataRow["ChildID"]=="":
+            continue
         if not dataRow["ChildID"] in studentHash:
             studentHash[dataRow["ChildID"]] = []
         studentHash[dataRow["ChildID"]].append(dataRow)
@@ -33,9 +53,21 @@ def PivotSecondParentData(dataList):
     newStudentList = []
     for key, value in studentHash.items():
         firstContact = value[0]
+        print firstContact
+        print len(value)
         newStudentList.append(firstContact)
         if (len(value) > 1):
-            secondContact = value[1]
+            # Addresses duplicate contacts
+            contactIndex = 1
+            secondContact = value[contactIndex]
+            print secondContact
+            while (firstContact["ParentFirstName"] == secondContact["ParentFirstName"]
+                and firstContact["ParentLastName"] == secondContact["ParentLastName"]
+                and len(value) != contactIndex):
+                contactIndex += 1
+                print secondContact
+                secondContact = value[contactIndex]
+
             firstContact["Parent2FirstName"] = secondContact["ParentFirstName"]
             firstContact["Parent2LastName"] = secondContact["ParentLastName"]
             firstContact["Parent2Language"] = secondContact["ParentLanguage"]
@@ -58,6 +90,7 @@ def PivotSecondParentData(dataList):
 
     return newStudentList
 
+
 def TransformAndExport(dest_file_name, dataList):
     wb = openpyxl.workbook.Workbook()
     sheet = wb.active
@@ -65,50 +98,50 @@ def TransformAndExport(dest_file_name, dataList):
     rowNum = 2
     for dataRow in dataList:
         WriteRows(sheet, rowNum, dataRow)
-        rowNum+=1
+        rowNum += 1
     wb.save(filename=dest_file_name)
 
 
-
 def WriteRows(sheet, rowNum, dataRow):
-    sheet.cell(row=rowNum, column=1).value = dataRow["ChildID"] #"Student ID"
-    sheet.cell(row=rowNum, column=2).value = "" #"State Identifier"
-    sheet.cell(row=rowNum, column=3).value = dataRow["ChildFirstName"] #"Student's First Name"
-    sheet.cell(row=rowNum, column=4).value = dataRow["ChildLastName"] #"Student's Last Name"
-    sheet.cell(row=rowNum, column=5).value = dataRow["ChildGender"] #"Student's Gender"
-    sheet.cell(row=rowNum, column=6).value = dataRow["ChildDateofBirth"] #"Student's DOB"
-    sheet.cell(row=rowNum, column=7).value = "" #"Ethnicity"
-    sheet.cell(row=rowNum, column=8).value = "" #"Student's Age"
-    sheet.cell(row=rowNum, column=9).value = "" #"Grade Level"
-    sheet.cell(row=rowNum, column=10).value = "" #"Class/Cohert"
-    sheet.cell(row=rowNum, column=11).value = "" #"Foster"
-    sheet.cell(row=rowNum, column=12).value = "" #"McKinney-Vento/Homeless"
-    sheet.cell(row=rowNum, column=13).value = "" #"Migrant Ed"
-    sheet.cell(row=rowNum, column=14).value = "" #"Special Ed"
-    sheet.cell(row=rowNum, column=15).value = dataRow["CenterName"] #"School Name"
-    sheet.cell(row=rowNum, column=16).value = "" #"Teacher"
-    sheet.cell(row=rowNum, column=17).value = dataRow["ParentFirstName"] #"Parent's First Name"
-    sheet.cell(row=rowNum, column=18).value = dataRow["ParentLastName"] #"Parent's Last Name"
-    sheet.cell(row=rowNum, column=19).value = dataRow["ParentLanguage"] #"Parent's Preferred Language"
-    sheet.cell(row=rowNum, column=20).value = dataRow["ParentGender"] #"Parent's Gender"
+    sheet.cell(row=rowNum, column=1).value = dataRow["ChildID"]  # "Student ID"
+    sheet.cell(row=rowNum, column=2).value = ""  # "State Identifier"
+    sheet.cell(row=rowNum, column=3).value = dataRow["ChildFirstName"]  # "Student's First Name"
+    sheet.cell(row=rowNum, column=4).value = dataRow["ChildLastName"]  # "Student's Last Name"
+    sheet.cell(row=rowNum, column=5).value = dataRow["ChildGender"]  # "Student's Gender"
+    sheet.cell(row=rowNum, column=6).value = dataRow["ChildDateofBirth"]  # "Student's DOB"
+    sheet.cell(row=rowNum, column=7).value = ""  # "Ethnicity"
+    sheet.cell(row=rowNum, column=8).value = ""  # "Student's Age"
+    sheet.cell(row=rowNum, column=9).value = ""  # "Grade Level"
+    sheet.cell(row=rowNum, column=10).value = ""  # "Class/Cohert"
+    sheet.cell(row=rowNum, column=11).value = ""  # "Foster"
+    sheet.cell(row=rowNum, column=12).value = ""  # "McKinney-Vento/Homeless"
+    sheet.cell(row=rowNum, column=13).value = ""  # "Migrant Ed"
+    sheet.cell(row=rowNum, column=14).value = ""  # "Special Ed"
+    sheet.cell(row=rowNum, column=15).value = dataRow["CenterName"]  # "School Name"
+    sheet.cell(row=rowNum, column=16).value = ""  # "Teacher"
+    sheet.cell(row=rowNum, column=17).value = dataRow["ParentFirstName"]  # "Parent's First Name"
+    sheet.cell(row=rowNum, column=18).value = dataRow["ParentLastName"]  # "Parent's Last Name"
+    sheet.cell(row=rowNum, column=19).value = dataRow["ParentLanguage"]  # "Parent's Preferred Language"
+    sheet.cell(row=rowNum, column=20).value = dataRow["ParentGender"]  # "Parent's Gender"
     sheet.cell(row=rowNum, column=21).value = dataRow["ParentRelationship"]  # "Relationship to Child"
-    sheet.cell(row=rowNum, column=22).value = dataRow["FamilyPhone"] #"Parent Main Phone"
-    sheet.cell(row=rowNum, column=23).value = "" #"Parent's Home Phone"
-    sheet.cell(row=rowNum, column=24).value = dataRow["FamilyAddress1"] #"Street/Mailing Address"
-    sheet.cell(row=rowNum, column=25).value = dataRow["FamilyCity"] #"Mailing City"
-    sheet.cell(row=rowNum, column=26).value = "" #"Mailing State/Province"
-    sheet.cell(row=rowNum, column=27).value = dataRow["FamilyZip"] #"Mailing Zip/Postal Code"
+    sheet.cell(row=rowNum, column=22).value = dataRow["FamilyPhone"]  # "Parent Main Phone"
+    sheet.cell(row=rowNum, column=23).value = ""  # "Parent's Home Phone"
+    sheet.cell(row=rowNum, column=24).value = dataRow["FamilyAddress1"]  # "Street/Mailing Address"
+    sheet.cell(row=rowNum, column=25).value = dataRow["FamilyCity"]  # "Mailing City"
+    sheet.cell(row=rowNum, column=26).value = ""  # "Mailing State/Province"
+    sheet.cell(row=rowNum, column=27).value = dataRow["FamilyZip"]  # "Mailing Zip/Postal Code"
 
-    sheet.cell(row=rowNum, column=28).value = dataRow["Parent2FirstName"] #"Second Parent's First Name"
-    sheet.cell(row=rowNum, column=29).value = dataRow["Parent2LastName"] #"Second Parent's Last Name"
-    sheet.cell(row=rowNum, column=30).value = dataRow["Parent2Gender"] #"Second Parent's Gender"
-    sheet.cell(row=rowNum, column=31).value = dataRow["Parent2Relationship"] #"Second Parent's Relationship to Child"
-    sheet.cell(row=rowNum, column=32).value = dataRow["Parent2Language"] #"Parent's Preferred Language"
-    sheet.cell(row=rowNum, column=33).value = dataRow["Family2Phone"] #"Second Parent's Phone"
-    sheet.cell(row=rowNum, column=34).value = dataRow["Family2Address1"] #"Street/Mailing Address"
-    sheet.cell(row=rowNum, column=35).value = dataRow["Family2City"] #"Mailing City"
-    sheet.cell(row=rowNum, column=36).value = "" #"Mailing State/Province"
-    sheet.cell(row=rowNum, column=37).value = dataRow["Family2Zip"] #"Mailing Zip/Postal Code"
+    sheet.cell(row=rowNum, column=28).value = dataRow["Parent2FirstName"]  # "Second Parent's First Name"
+    sheet.cell(row=rowNum, column=29).value = dataRow["Parent2LastName"]  # "Second Parent's Last Name"
+    sheet.cell(row=rowNum, column=30).value = dataRow["Parent2Gender"]  # "Second Parent's Gender"
+    sheet.cell(row=rowNum, column=31).value = dataRow["Parent2Relationship"]  # "Second Parent's Relationship to Child"
+    sheet.cell(row=rowNum, column=32).value = dataRow["Parent2Language"]  # "Parent's Preferred Language"
+    sheet.cell(row=rowNum, column=33).value = dataRow["Family2Phone"]  # "Second Parent's Phone"
+    sheet.cell(row=rowNum, column=34).value = dataRow["Family2Address1"]  # "Street/Mailing Address"
+    sheet.cell(row=rowNum, column=35).value = dataRow["Family2City"]  # "Mailing City"
+    sheet.cell(row=rowNum, column=36).value = ""  # "Mailing State/Province"
+    sheet.cell(row=rowNum, column=37).value = dataRow["Family2Zip"]  # "Mailing Zip/Postal Code"
+
 
 def WriteHeader(sheet):
     sheet.cell(row=1, column=1).value = "Student ID"
