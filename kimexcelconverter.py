@@ -1,8 +1,23 @@
 import openpyxl
+import os
 
 def run():
     print("starting...")
-    data = UseOpenpyxl("KimTestData.xlsx")
+    #data = UseOpenpyxl("data/HKF Cesar Chavez.xlsx")
+    data = []
+    directoryName = "data"
+ #   directory = os.fsencode("data")
+
+    for filename in os.listdir(directoryName):
+        #filename = os.fsdecode(file)
+        if filename.endswith(".xlsx"):
+            # print(os.path.join(directory, filename))
+            fileData = UseOpenpyxl("data/"+filename)
+            data.extend(fileData)
+            continue
+        else:
+            continue
+
     newStudentList = PivotSecondParentData(data)
     TransformAndExport("KimExportedData.xlsx", newStudentList)
     print("done")
@@ -30,6 +45,17 @@ def PivotSecondParentData(dataList):
             firstContact["Family2City"] = secondContact["FamilyCity"]
             firstContact["Family2Zip"] = secondContact["FamilyZip"]
             firstContact["Parent2Relationship"] = secondContact["ParentRelationship"]
+        else:
+            firstContact["Parent2FirstName"] = ""
+            firstContact["Parent2LastName"] = ""
+            firstContact["Parent2Language"] = ""
+            firstContact["Parent2Gender"] = ""
+            firstContact["Family2Phone"] = ""
+            firstContact["Family2Address1"] = ""
+            firstContact["Family2City"] = ""
+            firstContact["Family2Zip"] = ""
+            firstContact["Parent2Relationship"] = ""
+
     return newStudentList
 
 def TransformAndExport(dest_file_name, dataList):
